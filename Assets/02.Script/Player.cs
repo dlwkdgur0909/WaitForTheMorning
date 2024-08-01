@@ -1,23 +1,23 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class Player : MonoBehaviour
 {
+    [SerializeField] private new Camera camera;
+
+    private RaycastHit hit;
+
     #region Gun
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private Transform bulletPos;
     #endregion
 
     #region Flash
-    [SerializeField] private GameObject flashObject;
-    [SerializeField] private GameObject flash;
-    [SerializeField] private GameObject flashPos;
+    [SerializeField] private GameObject flashObject; //손전등 오브젝트
+    [SerializeField] private GameObject flashLight; //빛
+    [SerializeField] private GameObject flashPos; //손전등 위치
     private bool isTurnOn = false;
+    private bool isHaveFlash = false; //손전등을 들고있는지 확인하는 변수
     #endregion
-
 
     #region move
     [SerializeField] private float speed;
@@ -44,6 +44,11 @@ public class Player : MonoBehaviour
         Move();
         Rotate();
         Fire();
+        Flash();
+        Ray();
+        if (Input.GetKeyDown(KeyCode.G)) Throw();
+        if (isHaveFlash) Debug.Log("true");
+        else Debug.Log("false");
     }
 
     private void Move()
@@ -82,12 +87,48 @@ public class Player : MonoBehaviour
         }
     }
 
+    //손전등 켰다 껐다 하는 함수
     private void Flash()
     {
-        if (Input.GetMouseButtonDown(0))
+        //손전등을 들고있지 않으면 리턴
+        if (!isHaveFlash) return;
+
+        if (Input.GetKeyDown(KeyCode.F))
         {
             isTurnOn = !isTurnOn;
-            flash.GetComponent<Light>().enabled = isTurnOn;
+            flashLight.GetComponent<Light>().enabled = isTurnOn;
+        }
+
+        if (isHaveFlash)
+        {
+            flashObject.transform.SetPositionAndRotation(flashPos.transform.position, flashPos.transform.rotation);
+        }
+    }
+
+    //주운 오브젝트를 버리는 함수
+    private void Throw()
+    {
+        if (isHaveFlash) flashObject.GetComponent<Rigidbody>().AddForce(10 * Time.deltaTime * transform.forward, ForceMode.Impulse); isHaveFlash = false;
+    }
+
+    private void Ray()
+    {
+        Ray ray = camera.ScreenPointToRay(Input.mousePosition);
+
+
+        bool raycastHit = Physics.Raycast(ray, out hit);
+
+        if (raycastHit)
+        {
+            Transform objHit = hit.transform;
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                if (objHit.name == "FlashLightOBJ")
+                {
+                    isHaveFlash = true;
+                    flashObject.transform.SetPositionAndRotation(flashPos.transform.position, flashPos.transform.rotation);
+                }
+            }
         }
     }
 }
