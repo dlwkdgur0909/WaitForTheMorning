@@ -47,8 +47,6 @@ public class Player : MonoBehaviour
         Flash();
         Ray();
         if (Input.GetKeyDown(KeyCode.G)) Throw();
-        if (isHaveFlash) Debug.Log("true");
-        else Debug.Log("false");
     }
 
     private void Move()
@@ -108,7 +106,7 @@ public class Player : MonoBehaviour
     //주운 오브젝트를 버리는 함수
     private void Throw()
     {
-        if (isHaveFlash) flashObject.GetComponent<Rigidbody>().AddForce(10 * Time.deltaTime * transform.forward, ForceMode.Impulse); isHaveFlash = false;
+        if (isHaveFlash) flashObject.GetComponent<Rigidbody>().AddForce(5 * Time.deltaTime * transform.forward , ForceMode.Impulse); isHaveFlash = false;
     }
 
     private void Ray()
