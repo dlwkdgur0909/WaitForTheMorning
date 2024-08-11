@@ -5,7 +5,7 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class Pixelate : MonoBehaviour
 {
-    [Range(1, 100)] public int pixelate;
+    [Range(1, 3)] public int pixelate;
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
