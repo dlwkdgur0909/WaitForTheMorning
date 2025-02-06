@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 
 public class Player : MonoBehaviour
@@ -7,8 +8,16 @@ public class Player : MonoBehaviour
     private RaycastHit hit;
 
     #region Gun
+    [SerializeField] private GameObject gunObject; //총 오브젝트
+    [SerializeField] private GameObject gunPos; //총 위치
+    private Vector3 gunRot = new Vector3(-90f, 90f, 0f); //총의 회전 각도
+    [SerializeField] private GameObject bulletPos; // 총알 발사 위치
     [SerializeField] private GameObject bulletPrefab;
-    [SerializeField] private Transform bulletPos;
+    [SerializeField] private int bulletCount;
+    [SerializeField] private float spreadAngle; //총알의 퍼지는 각도
+    [SerializeField] private float fireRate; //발사 속도
+    [SerializeField] private float nextFireTime;
+    private bool isHaveGun = false; //총을 들고있는지 확인하는 변수
     #endregion
 
     #region Flash
@@ -43,7 +52,7 @@ public class Player : MonoBehaviour
     {
         Move();
         Rotate();
-        Fire();
+        HaveGun();
         Flash();
         Ray();
         if (Input.GetKeyDown(KeyCode.G)) Throw();
@@ -73,15 +82,26 @@ public class Player : MonoBehaviour
         Camera.main.transform.localRotation = Quaternion.Euler(eulerAngleX, 0, 0);
     }
 
+    private void HaveGun()
+    {
+        if (!isHaveGun) return;
+        gunObject.transform.position = gunPos.transform.position;
+        gunObject.transform.rotation = gunPos.transform.rotation;
+
+        Fire();
+    }
+
     private void Fire()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && Time.time >= nextFireTime)
         {
-            GameObject bullet = Instantiate(bulletPrefab, bulletPos.position, bulletPos.rotation);
-
-            bullet.GetComponent<Rigidbody>().velocity = bullet.transform.forward;
-
-            Destroy(bullet, 2f);
+            for (int i = 0; i < bulletCount; i++) 
+            {
+                float angle = Random.Range(-spreadAngle, spreadAngle);
+                Quaternion rotation = Quaternion.Euler(0, 0, -angle);
+                GameObject bullet = Instantiate(bulletPrefab, bulletPos.transform.position, bulletPos.transform.rotation * rotation);
+                bullet.GetComponent<Bullet>().speed = 50;
+            }
         }
     }
 
@@ -106,13 +126,15 @@ public class Player : MonoBehaviour
     //주운 오브젝트를 버리는 함수
     private void Throw()
     {
-        if (isHaveFlash) flashObject.GetComponent<Rigidbody>().AddForce(5 * Time.deltaTime * transform.forward , ForceMode.Impulse); isHaveFlash = false;
+        if (isHaveFlash) 
+            flashObject.GetComponent<Rigidbody>().AddForce(2 * Time.deltaTime * transform.forward , ForceMode.Impulse); isHaveFlash = false;
+        if (isHaveGun)
+            gunObject.GetComponent<Rigidbody>().AddForce(2 * Time.deltaTime * transform.forward, ForceMode.Impulse); isHaveGun = false;
     }
 
     private void Ray()
     {
         Ray ray = camera.ScreenPointToRay(Input.mousePosition);
-
 
         bool raycastHit = Physics.Raycast(ray, out hit);
 
@@ -123,8 +145,18 @@ public class Player : MonoBehaviour
             {
                 if (objHit.name == "FlashLightOBJ")
                 {
+                    if (isHaveGun) return;
                     isHaveFlash = true;
+                    //플레시 줍는 소리
                     flashObject.transform.SetPositionAndRotation(flashPos.transform.position, flashPos.transform.rotation);
+                }
+                if (objHit.name == "GunOBJ")
+                {
+                    if (isHaveFlash) return; 
+                    isHaveGun = true;
+                    //총 줍는 소리(장전 소리로 해도 됨)
+                    gunObject.transform.DOMove(gunPos.transform.position, 0.2f).SetEase(Ease.OutExpo);
+                    gunObject.transform.DORotate(gunRot, 0.2f).SetEase(Ease.OutExpo);
                 }
             }
         }
