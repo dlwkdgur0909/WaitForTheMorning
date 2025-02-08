@@ -9,7 +9,7 @@ public class Monster : MonoBehaviour
     private Transform door;
     [SerializeField] private new Renderer renderer;
 
-    public int hp = 5;
+    public int hp;
 
     private void Awake()
     {

@@ -3,12 +3,12 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    public static Player instance;
     [SerializeField] private new Camera camera;
-
     private RaycastHit hit;
 
     #region Gun
-    [SerializeField] private GameObject gunObject; //총 오브젝트
+    [SerializeField] public GameObject gunObject; //총 오브젝트
     [SerializeField] private GameObject gunPos; //총 위치
     private Vector3 gunRot = new Vector3(-90f, 90f, 0f); //총의 회전 각도
     [SerializeField] private GameObject bulletPos; // 총알 발사 위치
@@ -28,11 +28,17 @@ public class Player : MonoBehaviour
     private bool isHaveFlash = false; //손전등을 들고있는지 확인하는 변수
     #endregion
 
+    #region Cmera
+    [SerializeField] private GameObject cameraObject;
+    [SerializeField] private GameObject cameraPos;
+    private Vector3 cameraRot = new Vector3(-90f, 90f, 0f); 
+    #endregion
+
     #region move
     [SerializeField] private float speed;
     #endregion
 
-    #region camera
+    #region camera_gamdo
     public static float rotSpeed = 500f; //감도
 
     private float limitMaxY = 50; //카메라 Y축 회전 범위(최대)
@@ -97,9 +103,14 @@ public class Player : MonoBehaviour
         {
             for (int i = 0; i < bulletCount; i++) 
             {
-                float angle = Random.Range(-spreadAngle, spreadAngle);
-                Quaternion rotation = Quaternion.Euler(0, 0, -angle);
-                GameObject bullet = Instantiate(bulletPrefab, bulletPos.transform.position, bulletPos.transform.rotation * rotation);
+                float angleX = Random.Range(-spreadAngle, spreadAngle); // 위아래
+                float angleY = Random.Range(-spreadAngle, spreadAngle); // 좌우
+
+                Vector3 spreadDirection = bulletPos.transform.forward; // 기본 방향
+                Quaternion rotation = Quaternion.Euler(angleX, angleY, 0); // 위아래, 좌우로 퍼지는 회전
+
+                Vector3 bulletDirection = rotation * spreadDirection;
+                GameObject bullet = Instantiate(bulletPrefab, bulletPos.transform.position, Quaternion.LookRotation(bulletDirection));
                 bullet.GetComponent<Bullet>().speed = 50;
             }
         }
@@ -157,6 +168,11 @@ public class Player : MonoBehaviour
                     //총 줍는 소리(장전 소리로 해도 됨)
                     gunObject.transform.DOMove(gunPos.transform.position, 0.2f).SetEase(Ease.OutExpo);
                     gunObject.transform.DORotate(gunRot, 0.2f).SetEase(Ease.OutExpo);
+                }
+                if(objHit.name == "CameraOBJ")
+                {
+                    cameraObject.transform.DOMove(cameraPos.transform.position, 0.2f).SetEase(Ease.OutExpo);
+                    cameraObject.transform.DORotate(cameraRot, 0.2f).SetEase(Ease.OutExpo);
                 }
             }
         }
